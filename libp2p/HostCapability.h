@@ -83,6 +83,7 @@ protected:
 	virtual std::shared_ptr<Capability> newPeerCapability(std::shared_ptr<Session> const& _s, unsigned _idOffset, CapDesc const& _cap, uint16_t _capID)
 	{
 		_s->registerFraming(_capID);
+		auto cap = std::make_shared<PeerCap>(_s, this, _idOffset, _capID);
 		auto p = std::make_shared<PeerCap>(_s, this, _idOffset, _cap, _capID);
 		_s->registerCapability(_cap, p);
 		return p;

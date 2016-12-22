@@ -54,8 +54,13 @@ static string toString(Asking _a)
 	return "?";
 }
 
-EthereumPeer::EthereumPeer(std::shared_ptr<Session> _s, HostCapabilityFace* _h, unsigned _i, CapDesc const& _cap, uint16_t _capID):
-	Capability(_s, _h, _i, _capID),
+EthereumPeer::EthereumPeer(std::shared_ptr<p2p::Session> _s, p2p::HostCapabilityFace* _h, unsigned _i, p2p::CapDesc const& _cap, uint16_t _capID) :
+	EthereumPeer(std::unique_ptr<Capability>(new Capability(_s, _h, _i, _capID)), _cap)
+{
+}
+
+EthereumPeer::EthereumPeer(std::unique_ptr<p2p::Capability> _capability, p2p::CapDesc const& _cap):
+	m_capability(std::move(_capability)),
 	m_peerCapabilityVersion(_cap.second)
 {
 	session()->addNote("manners", isRude() ? "RUDE" : "nice");
@@ -395,9 +400,9 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 			rlp += bc.headerData(hashes[reverse ? i : hashes.size() - 1 - i]);
 
 		RLPStream s;
-		prep(s, BlockHeadersPacket, itemCount).appendRaw(rlp, itemCount);
-		sealAndSend(s);
-		addRating(0);
+		m_capability->prep(s, BlockHeadersPacket, itemCount).appendRaw(rlp, itemCount);
+		m_capability->sealAndSend(s);
+		m_capability->addRating(0);
 		break;
 	}
 	case BlockHeadersPacket:
@@ -419,7 +424,7 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 		if (!count)
 		{
 			clog(NetImpolite) << "Zero-entry GetBlockBodies: Not replying.";
-			addRating(-10);
+			m_capability->addRating(-10);
 			break;
 		}
 		// return the requested blocks.
@@ -447,10 +452,10 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 		else
 			clog(NetMessageSummary) << n << "blocks known and returned;" << (numBodiesToSend - n) << "blocks unknown;" << (count > c_maxBlocks ? count - c_maxBlocks : 0) << "blocks ignored";
 
-		addRating(0);
+		m_capability->addRating(0);
 		RLPStream s;
-		prep(s, BlockBodiesPacket, n).appendRaw(rlp, n);
-		sealAndSend(s);
+		m_capability->prep(s, BlockBodiesPacket, n).appendRaw(rlp, n);
+		m_capability->sealAndSend(s);
 		break;
 	}
 	case BlockBodiesPacket:
@@ -494,7 +499,7 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 		if (!count)
 		{
 			clog(NetImpolite) << "Zero-entry GetNodeData: Not replying.";
-			addRating(-10);
+			m_capability->addRating(-10);
 			break;
 		}
 		clog(NetMessageSummary) << "GetNodeData (" << dec << count << " entries)";
@@ -517,12 +522,12 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 		}
 		clog(NetMessageSummary) << n << " nodes known and returned;" << (numItemsToSend - n) << " unknown;" << (count > c_maxNodes ? count - c_maxNodes : 0) << " ignored";
 
-		addRating(0);
+		m_capability->addRating(0);
 		RLPStream s;
-		prep(s, NodeDataPacket, n);
+		m_capability->prep(s, NodeDataPacket, n);
 		for (auto const& element: data)
 			s.append(element);
-		sealAndSend(s);
+		m_capability->sealAndSend(s);
 		break;
 	}
 	case GetReceiptsPacket:
@@ -531,7 +536,7 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 		if (!count)
 		{
 			clog(NetImpolite) << "Zero-entry GetReceipts: Not replying.";
-			addRating(-10);
+			m_capability->addRating(-10);
 			break;
 		}
 		clog(NetMessageSummary) << "GetReceipts (" << dec << count << " entries)";
@@ -553,10 +558,10 @@ bool EthereumPeer::interpret(unsigned _id, RLP const& _r)
 		}
 		clog(NetMessageSummary) << n << " receipt lists known and returned;" << (numItemsToSend - n) << " unknown;" << (count > c_maxReceipts ? count - c_maxReceipts : 0) << " ignored";
 
-		addRating(0);
+		m_capability->addRating(0);
 		RLPStream s;
-		prep(s, ReceiptsPacket, n).appendRaw(rlp, n);
-		sealAndSend(s);
+		m_capability->prep(s, ReceiptsPacket, n).appendRaw(rlp, n);
+		m_capability->sealAndSend(s);
 		break;
 	}
 	case NodeDataPacket:

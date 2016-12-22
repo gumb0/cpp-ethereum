@@ -44,19 +44,20 @@ public:
 	static u256 version() { return 0; }
 	static unsigned messageCount() { return 0; }
 */
-protected:
 	std::shared_ptr<Session> session() const { return m_session.lock(); }
-	HostCapabilityFace* hostCapability() const { return m_hostCap; }
-	Host* host() const { return m_hostCap->host(); }
 	ReputationManager& repMan() const;
-
-	virtual bool interpret(unsigned _id, RLP const&) = 0;
 
 	void disable(std::string const& _problem);
 
+	void addRating(int _r);
 	RLPStream& prep(RLPStream& _s, unsigned _id, unsigned _args = 0);
 	void sealAndSend(RLPStream& _s);
-	void addRating(int _r);
+
+protected:
+	HostCapabilityFace* hostCapability() const { return m_hostCap; }
+	Host* host() const { return m_hostCap->host(); }
+
+	virtual bool interpret(unsigned _id, RLP const&) = 0;
 
 	uint16_t const c_protocolID;
 

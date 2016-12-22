@@ -42,7 +42,7 @@ namespace eth
  * @todo Document fully.
  * @todo make state transitions thread-safe.
  */
-class EthereumPeer: public p2p::Capability
+class EthereumPeer
 {
 	friend class EthereumHost; //TODO: remove this
 	friend class BlockChainSync; //TODO: remove this
@@ -50,6 +50,8 @@ class EthereumPeer: public p2p::Capability
 public:
 	/// Basic constructor.
 	EthereumPeer(std::shared_ptr<p2p::Session> _s, p2p::HostCapabilityFace* _h, unsigned _i, p2p::CapDesc const& _cap, uint16_t _capID);
+
+	EthereumPeer(std::unique_ptr<p2p::Capability> _capability, p2p::CapDesc const& _cap);
 
 	/// Basic destructor.
 	virtual ~EthereumPeer();
@@ -91,8 +93,19 @@ public:
 	/// Abort the sync operation.
 	void abortSync();
 
+	void disable(std::string const& _problem) { m_capability->disable(_problem); }
+
+	void addRating(int _r) { m_capability->addRating(_r);  }
+
+	RLPStream& prep(RLPStream& _s, unsigned _id, unsigned _args = 0) { return m_capability->prep(_s, _id, _args); }
+	
+	void sealAndSend(RLPStream& _s) { m_capability->sealAndSend(_s); }
+
 private:
-	using p2p::Capability::sealAndSend;
+//	using p2p::Capability::sealAndSend;
+
+	std::shared_ptr<p2p::Session> session() const { return m_capability->session(); }
+	p2p::ReputationManager& repMan() const { m_capability->repMan(); }
 
 	/// Figure out the amount of blocks we should be asking for.
 	unsigned askOverride() const;
@@ -124,6 +137,8 @@ private:
 
 	/// Runs period checks to check up on the peer.
 	void tick();
+
+	std::unique_ptr<p2p::Capability> m_capability;
 
 	/// Peer's protocol version.
 	unsigned m_protocolVersion;
