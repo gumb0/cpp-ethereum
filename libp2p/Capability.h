@@ -36,6 +36,8 @@ class Capability: public std::enable_shared_from_this<Capability>
 	friend class Session;
 
 public:
+	// TODO HostCapabilityFace will be used only in WhisperPeer, better refactor and remove it from it
+	// TODO RepMan probably is still going to bee needed though
 	Capability(std::shared_ptr<SessionFace> _s, HostCapabilityFace* _h, unsigned _idOffset, uint16_t _protocolID);
 	virtual ~Capability() {}
 

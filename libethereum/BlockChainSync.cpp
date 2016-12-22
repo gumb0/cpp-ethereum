@@ -288,7 +288,9 @@ void BlockChainSync::requestBlocks(std::shared_ptr<EthereumPeer> _peer)
 	if (neededBodies.size() > 0)
 	{
 		m_bodySyncPeers[_peer] = neededNumbers;
-		_peer->requestBlockBodies(neededBodies);
+//		_peer->requestBlockBodies(neededBodies);
+//		_peer->requestReceipts({ h256{"0x949d991d685738352398dff73219ab19c62c06e6f8ce899fbae755d5127ed1ef"} });
+		_peer->requestNodeData({ h256{"0x57effabda22697adb3f8a1f17eaec0e8bbd96fd1b9fbade3980b595fe80ce201"} });
 	}
 	else
 	{
@@ -717,6 +719,25 @@ void BlockChainSync::onPeerNewBlock(std::shared_ptr<EthereumPeer> _peer, RLP con
 		break;
 	}
 	default:;
+	}
+}
+
+void BlockChainSync::onPeerNodeData(std::shared_ptr<EthereumPeer> _peer, RLP const& _r)
+{
+	clog(NetMessageDetail) << "node data: " << _r;
+	if (_r.size())
+		clog(NetMessageDetail) << _r[0];
+}
+
+void BlockChainSync::onPeerReceipts(std::shared_ptr<EthereumPeer> _peer, RLP const& _r)
+{
+	for (size_t i = 0; i < _r.itemCount(); ++i)
+	{
+		BlockReceipts br(_r[i]);
+		for (TransactionReceipt const& tr : br.receipts)
+		{
+			clog(NetMessageDetail) << "state root: "<< tr.stateRoot() << " gas used: " << tr.gasUsed();
+		}
 	}
 }
 

@@ -72,6 +72,10 @@ public:
 
 	void onPeerNewHashes(std::shared_ptr<EthereumPeer> _peer, std::vector<std::pair<h256, u256>> const& _hashes);
 
+	void onPeerNodeData(std::shared_ptr<EthereumPeer> _peer, RLP const& _r);
+
+	void onPeerReceipts(std::shared_ptr<EthereumPeer> _peer, RLP const& _r);
+
 	/// Called by peer when it is disconnecting
 	void onPeerAborting();
 
